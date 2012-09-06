@@ -11,14 +11,22 @@
 class StaticLoader
 {
 
-    public $static_config;
-    public $yui_config;
-    public $css_files;
-    public $user_modules;
+    protected $static_config;
+    protected $yui_config;
+    protected $css_files;
+    protected $user_modules;
 
-    public function __construct()
+    public function __construct($config_file = "config.php")
     {
-        $this->config =& load_class("Config");
+        $path = realpath($config_file);
+        if ($path && file_exists($path))
+        {
+            $this->static_config = require_once($path);
+        }
+        else
+        {
+            throw new FileNotFoundException("File not found: " . $config_file);
+        }
     }
 
     /**
@@ -123,11 +131,7 @@ class StaticLoader
             $modules = func_get_args();
         }
         $this->user_modules = $modules;
-
-        // Load configuration file - config/static.php.
-        $this->config->load("static", TRUE);
-        $config = $this->config->item("static");
-        $this->static_config = $config;
+        $config = $this->static_config;
 
         // Make groups config.
         $groups = array();
@@ -208,4 +212,8 @@ class StaticLoader
     }
 
 }
+
+class StaticLoaderException extends Exception {};
+class FileNotFoundException extends StaticLoaderException {};
+class ModuleNotFoundException extends StaticLoaderException {};
 ?>
